@@ -1,0 +1,21 @@
+/** Width for different screens applied for update page */
+
+/* Visible only on small screens (mobile, <=639px) */
+@media (max-width: 639px) {
+  .vssm {
+    display: block !important;
+  }
+  .vsfmd {
+    display: none !important;
+  }
+}
+
+/* Visible only on medium screens and above (>=640px) */
+@media (min-width: 640px) {
+  .vsmd {
+    display: none !important;
+  }
+  .vsfsm {
+    display: block !important;
+  }
+}

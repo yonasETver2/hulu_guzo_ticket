@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+/* globals.css */
+
+html,
+body {
+  @apply transition-colors duration-300;
+}
+
+body {
+  @apply bg-white text-black;
+}
+
+html.dark body {
+  @apply bg-black text-white;
+}
+
+.bg-info{
+  background-color: #e1dddd !important;
+}
+
+.z10{
+  z-index: 10 !important;
+}
+/**Animation effect for three dot of the call*/
+@keyframes dot-flow {
+  0%,
+  100% {
+    background-color: #cbd5e1; /* light gray */
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    background-color: #5376f6; /* highlight color */
+    transform: scale(1.5);
+    opacity: 1;
+  }
+}
+
+.animate-dot-flow {
+  animation: dot-flow 2s ease-in-out infinite;
+}
+
+/* Scrollbar Track */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+/* Scrollbar Thumb */
+::-webkit-scrollbar-thumb {
+  background-color: #6b82d3dc; /* Change this to any color */
+  border-radius: 6px;
+}
+
+/* Scrollbar Track background */
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Track color */
+}
+
+/**for landscape oraintation and width size 320 -900*/
+@media (min-width: 320px) and (max-width: 900px) and (orientation: landscape) {
+  .landscape-box {
+    position: static !important;
+  }
+}
+
+/*for screen size less 370px*/
+@media (max-width: 370px)  {
+  .sm-mob {
+    width: 307px !important;
+  }
+  .sm-mob-text{
+    font-size: 10px !important;
+  }
+}
+
+/* For Webkit browsers (Chrome, Safari) */
+.scrollable-hiden {
+  overflow: auto; /* or scroll */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.scrollable-hiden::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/*Blnk*/
+@keyframes blink {
+  0%, 50%, 100% {
+    opacity: 1;
+  }
+  25%, 75% {
+    opacity: 0;
+  }
+}
+
+.blink {
+  animation: blink 2.5s infinite;
+}
+
+/* For mobile screens */
+@media (max-width: 400px) {
+  .w-margin {
+    margin-left: 15px !important;
+    margin-right: 15px !important;
+  }
+}
+
