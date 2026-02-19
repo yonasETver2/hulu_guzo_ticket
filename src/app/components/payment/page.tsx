@@ -13,17 +13,6 @@ interface Seat {
   pos_col: number;
 }
 
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string | number;
-      name?: string | null;
-      email?: string | null;
-      image?: string | null;
-    };
-  }
-}
-
 function PaymentPage() {
   const { status } = useGlobalState();
   const searchParams = useSearchParams();
@@ -45,7 +34,6 @@ function PaymentPage() {
       col: number;
     }[] = [];
 
-    // cast Object.values to Seat[][]
     for (const id of seatIds) {
       for (const rowSeats of Object.values(layoutObj) as Seat[][]) {
         const seat = rowSeats.find((s) => s.seat_number === id);

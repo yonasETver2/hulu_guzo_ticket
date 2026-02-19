@@ -17,13 +17,18 @@ export async function POST(req: Request) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert user
-    await query("CALL signUpUser(?, ?, ?, ?)", [
-      email,
-      username,
-      userType,
-      hashedPassword,
-    ]);
+    // Insert user via Postgres function
+    await query(
+      `
+      SELECT * FROM signUpUser(
+        $1::text,
+        $2::text,
+        $3::text,
+        $4::text
+      )
+      `,
+      [email, username, userType, hashedPassword]
+    );
 
     return NextResponse.json(
       { success: true, message: "User signed up successfully" },
@@ -31,7 +36,7 @@ export async function POST(req: Request) {
     );
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: error.sqlMessage || error.message },
+      { success: false, message: error.message },
       { status: 500 }
     );
   }

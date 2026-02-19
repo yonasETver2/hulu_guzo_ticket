@@ -2,28 +2,31 @@
 import { useEffect, useState } from "react";
 
 export function useProviders(lang: string) {
-  const [providerList, setProviderList] = useState<any[]>([]);
+  const [providerList, setProviderList] = useState<
+    {
+      id: number;
+      en: string;
+      am: string;
+      logo: string; // already a data URI from backend
+      type: string;
+    }[]
+  >([]);
 
-  // read providers (UNCHANGED)
+  // Load providers from API
   useEffect(() => {
     async function loadProviders() {
       try {
         const res = await fetch("/api/getProvider");
         const data = await res.json();
 
-        if (!Array.isArray(data)) {
-          console.error("Unexpected data format:", data);
-          return;
-        }
+        const providersArray = data.providers ?? [];
 
-        const providerOptions = data.map((provider) => ({
-          id: provider.provider_id,
-          en: provider.transporter_name,
-          am: provider.transporter_name_amh,
-          logo: provider.image_data
-            ? Buffer.from(provider.image_data).toString("base64")
-            : null,
-          type: provider.image_type || "image/png",
+        const providerOptions = providersArray.map((provider: any) => ({
+          id: provider.id,
+          en: provider.en,
+          am: provider.am,
+          logo: provider.logo || "", // Already full data URI
+          type: provider.type || "image/png",
         }));
 
         setProviderList(providerOptions);
@@ -35,33 +38,22 @@ export function useProviders(lang: string) {
     loadProviders();
   }, [lang]);
 
-  /** find bus provider name */
-  function formatProviderName(
-    providerId: string | number,
-    lang?: string
-  ): string {
-    if (!providerList || providerList.length === 0) return "...";
-
+  /** Get provider name by ID */
+  function formatProviderName(providerId: string | number): string {
     const provider = providerList.find(
-      (p: any) => String(p.id) === String(providerId)
+      (p) => String(p.id) === String(providerId)
     );
-
     if (!provider) return "Unknown";
-
     return lang === "en" ? provider.en : provider.am;
   }
 
-  /** find bus provider logo */
+  /** Get provider logo by ID */
   function getProviderLogo(providerId: string | number): string {
-    if (!providerList || providerList.length === 0) return "";
-
     const provider = providerList.find(
-      (p: any) => String(p.id) === String(providerId)
+      (p) => String(p.id) === String(providerId)
     );
-
     if (!provider || !provider.logo) return "";
-
-    return `data:${provider.type || "image/png"};base64,${provider.logo}`;
+    return provider.logo; // ✅ Already contains full data URI
   }
 
   return {

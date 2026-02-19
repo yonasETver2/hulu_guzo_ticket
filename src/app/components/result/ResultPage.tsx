@@ -20,6 +20,9 @@ export default function ResultPage() {
   const { status } = useGlobalState();
   const home = useHomePageState();
 
+  // -------------------------
+  // Hooks (must always run)
+  // -------------------------
   const {
     crossIndex,
     crossIndexTwo,
@@ -59,11 +62,15 @@ export default function ResultPage() {
     if (selectedProvider) setSelectedBus(selectedProvider);
   };
 
+  // -------------------------
+  // Derived data
+  // -------------------------
   const sortedProviders = useMemo(() => {
     if (!dataFromChild) return [];
     const selectedProviderId = providerList.find(
       (p) => (status.setting?.lang === "en" ? p.en : p.am) === selectedBus,
     )?.id;
+
     const entries = Object.entries(dataFromChild);
     if (!selectedProviderId) return entries;
 
@@ -79,8 +86,12 @@ export default function ResultPage() {
       Array.isArray(trips?.[tripType]) && trips[tripType].length > 0,
   );
 
+  // -------------------------
+  // JSX
+  // -------------------------
   return (
     <>
+      {/* Top fixed ResultContent */}
       <div className="fixed z-40 w-full bg-white">
         <ResultContent
           sendDataToParent={handleChildData}
@@ -88,14 +99,16 @@ export default function ResultPage() {
         />
       </div>
 
-      <div className="mt-40 md:h-[350px] md:pb-14 overflow-auto">
+      {/* Trips list */}
+      <div className="mt-40 md:h-[350px] overflow-auto md:pb-14">
         <ResultHeaderAction
           tripType={tripType}
           handleClickInfo={handleClickInfo}
           status={status}
         />
 
-        {!hasAnyTrips && (
+        {/* No trips message OR provider rows */}
+        {!hasAnyTrips ? (
           <div className="flex justify-center items-center py-8">
             <p className="text-gray-500 font-semibold">
               {status.setting?.lang === "en"
@@ -103,29 +116,29 @@ export default function ResultPage() {
                 : "ምንም ጉዞ አልተገኘም፣ እባኮትን ጉዞ ይቀይሩ"}
             </p>
           </div>
+        ) : (
+          sortedProviders.map(([providerId, trips]: any, index0) => (
+            <ProviderTripsRow
+              key={providerId}
+              providerId={providerId}
+              trips={trips}
+              index0={index0}
+              tripType={tripType}
+              status={status}
+              styles={styles}
+              selectedOneWayTrip={selectedOneWayTrip}
+              selectedTwoWayTrip={selectedTwoWayTrip}
+              handleCardClick={handleCardClick}
+              handelPopup={handelPopup}
+              crossIndex={crossIndex}
+              crossIndexTwo={crossIndexTwo}
+              crossHover={crossHover}
+              handelCross={handelCross}
+              getProviderLogo={getProviderLogo}
+              formatProviderName={formatProviderName}
+            />
+          ))
         )}
-
-        {sortedProviders.map(([providerId, trips]: any, index0) => (
-          <ProviderTripsRow
-            key={providerId}
-            providerId={providerId}
-            trips={trips}
-            index0={index0}
-            tripType={tripType}
-            status={status}
-            styles={styles}
-            selectedOneWayTrip={selectedOneWayTrip}
-            selectedTwoWayTrip={selectedTwoWayTrip}
-            handleCardClick={handleCardClick}
-            handelPopup={handelPopup}
-            crossIndex={crossIndex}
-            crossIndexTwo={crossIndexTwo}
-            crossHover={crossHover}
-            handelCross={handelCross}
-            getProviderLogo={getProviderLogo}
-            formatProviderName={formatProviderName}
-          />
-        ))}
       </div>
     </>
   );

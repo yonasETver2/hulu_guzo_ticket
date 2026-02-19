@@ -5,42 +5,66 @@ import bcrypt from "bcryptjs";
 export async function POST(req: Request) {
   const { identifier, otp, newPassword } = await req.json();
 
-  // Find OTP in otp_store
-  const otpResults: any = await query(
-    "SELECT * FROM otp_store WHERE email=? AND otp=? AND expires_at > NOW()",
+  // 1️⃣ Find OTP in otp_store
+  const otpResult = await query(
+    `
+    SELECT *
+    FROM otp_store
+    WHERE email = $1
+      AND otp = $2
+      AND expires_at > NOW()
+    `,
     [identifier, otp]
   );
 
-  if (!otpResults[0]) {
+  const otpRow = otpResult.rows[0];
+  if (!otpRow) {
     return NextResponse.json({
       success: false,
       message: "Invalid or expired OTP.",
     });
   }
 
-  // Find user
-  const userResults: any = await query(
-    "SELECT * FROM sign_up WHERE email_adress=? OR user_name=?",
-    [identifier, identifier]
+  // 2️⃣ Find user
+  const userResult = await query(
+    `
+    SELECT *
+    FROM sign_up
+    WHERE email_adress = $1
+       OR user_name = $1
+    `,
+    [identifier]
   );
 
-  if (!userResults[0]) {
+  const user = userResult.rows[0];
+  if (!user) {
     return NextResponse.json({
       success: false,
       message: "User not found.",
     });
   }
 
+  // 3️⃣ Hash new password
   const hashed = await bcrypt.hash(newPassword, 10);
 
-  // Update password
-  await query("UPDATE sign_up SET usr_password=? WHERE sign_up_id=?", [
-    hashed,
-    userResults[0].sign_up_id,
-  ]);
+  // 4️⃣ Update password
+  await query(
+    `
+    UPDATE sign_up
+    SET usr_password = $1
+    WHERE sign_up_id = $2
+    `,
+    [hashed, user.sign_up_id]
+  );
 
-  // Delete used OTP
-  await query("DELETE FROM otp_store WHERE id=?", [otpResults[0].id]);
+  // 5️⃣ Delete used OTP
+  await query(
+    `
+    DELETE FROM otp_store
+    WHERE id = $1
+    `,
+    [otpRow.id]
+  );
 
   return NextResponse.json({ success: true });
 }

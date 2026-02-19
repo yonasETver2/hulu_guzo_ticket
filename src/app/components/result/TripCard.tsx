@@ -1,5 +1,6 @@
 import Image from "next/image";
 import BusRoot from "./bus_root/bus_root";
+import { useState } from "react";
 
 interface Props {
   trip: any;
@@ -18,8 +19,8 @@ interface Props {
   handelPopup: (i: number | null, j: number | null) => void;
   crossIndex: number | null;
   crossIndexTwo: number | null;
-  crossHover: boolean;
-  handelCross: () => void;
+  crossHover?: boolean;      // ✅ Add this
+  handelCross?: () => void;  // ✅ Add this
   getProviderLogo: (id: string) => string;
   formatProviderName: (id: string, lang: string) => string;
 }
@@ -36,11 +37,13 @@ const TripCard = ({
   handelPopup,
   crossIndex,
   crossIndexTwo,
-  crossHover,
   handelCross,
   getProviderLogo,
   formatProviderName,
 }: Props) => {
+  // ✅ Local state for hover to avoid conditional hooks from parent
+  const [localCrossHover, setLocalCrossHover] = useState(false);
+
   return (
     <div
       className={`relative shadow-md w-[275px] flex-shrink-1 cursor-pointer ${
@@ -80,11 +83,11 @@ const TripCard = ({
             </p>
             <Image
               onClick={() => handelPopup(-1, -2)}
-              onMouseEnter={handelCross}
-              onMouseLeave={handelCross}
+              onMouseEnter={() => setLocalCrossHover(true)}
+              onMouseLeave={() => setLocalCrossHover(false)}
               className="cursor-pointer"
               src={
-                crossHover
+                localCrossHover
                   ? "/assets/icons/cross_close_hover.svg"
                   : "/assets/icons/cross_close.svg"
               }
@@ -125,14 +128,19 @@ const TripCard = ({
 
               <div className="flex items-center space-x-2 pt-4">
                 <div className="w-[20px] h-[20px] bg-white rounded-full flex justify-center items-center">
-                  <Image
-                    src={getProviderLogo(providerId)}
-                    alt="Logo"
-                    width={20}
-                    height={20}
-                    unoptimized
-                  />
+                  {getProviderLogo(providerId) ? (
+                    <Image
+                      src={getProviderLogo(providerId)}
+                      alt="Logo"
+                      width={20}
+                      height={20}
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="w-4 h-4 bg-gray-200 rounded-full"></div>
+                  )}
                 </div>
+
                 <p>{formatProviderName(providerId, status.setting?.lang)}</p>
               </div>
             </div>

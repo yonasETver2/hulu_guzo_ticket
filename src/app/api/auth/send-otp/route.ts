@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     if (!email) {
       return NextResponse.json(
         { success: false, message: "Email or username required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -24,12 +24,16 @@ export async function POST(req: Request) {
     // Set expiry: 3 minutes
     const expiresAt = new Date(Date.now() + 3 * 60 * 1000);
 
-    // Save OTP in DB
+    // Save OTP in Postgres (Neon)
     await query(
-      `INSERT INTO otp_store (email, otp, expires_at)
-       VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE otp=?, expires_at=?`,
-      [email, otp, expiresAt, otp, expiresAt]
+      `
+      INSERT INTO otp_store (email, otp, expires_at)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (email)
+      DO UPDATE SET otp = EXCLUDED.otp,
+                    expires_at = EXCLUDED.expires_at
+      `,
+      [email, otp, expiresAt],
     );
 
     // Send OTP using Resend
@@ -47,12 +51,11 @@ export async function POST(req: Request) {
       message: "OTP sent successfully",
       otp,
     });
-
   } catch (err: any) {
     console.error("Send OTP error:", err);
     return NextResponse.json(
       { success: false, message: "Failed to send OTP" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

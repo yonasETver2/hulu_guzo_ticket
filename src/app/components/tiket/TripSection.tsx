@@ -44,10 +44,41 @@ export default function TripSection({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+   const sanitizeForCanvas = (element: HTMLElement) => {
+    const all = element.querySelectorAll("*");
+
+    all.forEach((el) => {
+      const htmlEl = el as HTMLElement;
+
+      // remove Tailwind gradients / fancy colors
+      htmlEl.style.backgroundImage = "none";
+
+      const style = getComputedStyle(htmlEl);
+
+      if (style.color.includes("lab") || style.color.includes("oklch")) {
+        htmlEl.style.color = "#000";
+      }
+
+      if (
+        style.backgroundColor.includes("lab") ||
+        style.backgroundColor.includes("oklch")
+      ) {
+        htmlEl.style.backgroundColor = "#fff";
+      }
+
+      if (
+        style.borderColor.includes("lab") ||
+        style.borderColor.includes("oklch")
+      ) {
+        htmlEl.style.borderColor = "#000";
+      }
+    });
+  };
+
   // ================= IMAGE GENERATOR =================
   const generateImage = async () => {
     if (!tripRef.current) return null;
-    const html2canvas = (await import("html2canvas-oklch")).default;
+    const html2canvas = (await import("html2canvas")).default;
     const canvas = await html2canvas(tripRef.current, {
       scale: 2,
       useCORS: true,
@@ -81,12 +112,22 @@ export default function TripSection({
   };
 
   // ================= DOWNLOAD IMAGE =================
-  const handleDownloadImage = async () => {
-    const image = await generateImage();
-    if (!image) return;
+ const handleDownloadImage = async () => {
+    if (!tripRef.current) return;
+
+    const html2canvas = (await import("html2canvas")).default;
+
+    sanitizeForCanvas(tripRef.current); // 🔥 important
+
+    const canvas = await html2canvas(tripRef.current, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+    });
+
     const link = document.createElement("a");
-    link.href = image;
     link.download = `Tickets-${date}.png`;
+    link.href = canvas.toDataURL("image/png");
     link.click();
   };
 
@@ -165,8 +206,8 @@ export default function TripSection({
                         ? "Sending..."
                         : "በመላክ ላይ..."
                       : status.setting?.lang === "en"
-                      ? "WhatsApp"
-                      : "ዋትስአፕ"}
+                        ? "WhatsApp"
+                        : "ዋትስአፕ"}
                   </button>
 
                   <button
@@ -178,8 +219,8 @@ export default function TripSection({
                         ? "Sending..."
                         : "በመላክ ላይ..."
                       : status.setting?.lang === "en"
-                      ? "Telegram"
-                      : "ቴሌግራም"}
+                        ? "Telegram"
+                        : "ቴሌግራም"}
                   </button>
 
                   <button
@@ -191,8 +232,8 @@ export default function TripSection({
                         ? "Sending..."
                         : "በመላክ ላይ..."
                       : status.setting?.lang === "en"
-                      ? "SMS"
-                      : "አጭር መልክት"}
+                        ? "SMS"
+                        : "አጭር መልክት"}
                   </button>
                 </div>
               )}

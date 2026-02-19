@@ -1,12 +1,13 @@
-import { NextResponse } from "next/server";
-import { query } from "@/lib/db_hulu_guzo_admin";
+import { NextRequest, NextResponse } from "next/server";
+import { query } from "@/lib/db_hulu_guzo";
 
-// Define a type for the result row
-interface BusRow {
-  bus_category_id: string; // Adjust this based on the actual type of `bus_category_id`
+interface Seat {
+  seat_number: string;
+  pos_row: number;
+  pos_col: number;
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const provider_id = searchParams.get("provider_id");
@@ -15,39 +16,42 @@ export async function GET(req: Request) {
     if (!provider_id || !bus_code) {
       return NextResponse.json(
         { error: "Missing required parameters" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Get bus_category_id from register_bus
-    const busRow = await query(
+    // Get bus_category_id
+    const busRowResult = await query(
       `SELECT bus_category_id FROM register_bus 
-       WHERE provider_id = ? AND bus_code = ? LIMIT 1`,
-      [provider_id, bus_code]
-    );
+       WHERE provider_id = $1 AND bus_code = $2 
+       LIMIT 1`,
+      [provider_id, bus_code],
+    ) as { rows: { bus_category_id: string }[] };
 
-    // Cast busRow to BusRow[] (assuming it returns an array of BusRow)
-    if (Array.isArray(busRow) && busRow.length > 0) {
-      const bus_category_id = (busRow[0] as BusRow).bus_category_id;
-
-      // Fetch seat layout dynamically
-      const seats = await query(
-        `SELECT seat_number, pos_row, pos_col 
-         FROM bus_seat 
-         WHERE provider_id = ? AND bus_category_id = ? 
-         ORDER BY pos_row, pos_col`,
-        [provider_id, bus_category_id]
-      );
-
-      return NextResponse.json({ seats });
-    } else {
+    const busRow = busRowResult.rows[0];
+    if (!busRow) {
       return NextResponse.json({ error: "Bus not found" }, { status: 404 });
     }
-  } catch (error) {
+
+    const bus_category_id = busRow.bus_category_id;
+
+    // Fetch seat layout
+    const seatsResult = await query(
+      `SELECT seat_number, pos_row, pos_col 
+       FROM bus_seat 
+       WHERE provider_id = $1 AND bus_category_id = $2 
+       ORDER BY pos_row, pos_col`,
+      [provider_id, bus_category_id],
+    ) as { rows: Seat[] };
+
+    const seats = seatsResult.rows ?? [];
+
+    return NextResponse.json({ seats });
+  } catch (error: any) {
     console.error("Error fetching bus seats:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
+      { error: "Internal Server Error", details: error.message },
+      { status: 500 },
     );
   }
 }

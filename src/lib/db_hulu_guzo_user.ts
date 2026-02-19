@@ -1,20 +1,10 @@
 // lib/db.ts
-"use server";
+import { Pool } from "@neondatabase/serverless";
 
-import mysql from "mysql2/promise";
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL!,
+});
 
-export async function query(sql: string, params: any[] = []) {
-  const connection = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "123456",
-    database: "hulu_guzo_user",
-  });
-
-  try {
-    const [results] = await connection.execute(sql, params);
-    return results;
-  } finally {
-    await connection.end(); // ensures connection is always closed
-  }
+export async function query(text: string, params: any[] = []) {
+  return pool.query(text, params);
 }

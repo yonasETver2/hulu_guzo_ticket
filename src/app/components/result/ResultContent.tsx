@@ -9,13 +9,14 @@ import TransportDropdown from "./TransportDropdown";
 import { useGlobalState } from "@/app/globalContext/GlobalState";
 import { useHomePageState } from "../home/hooks/useHomePageState";
 import { useResultTopState } from "./hooks/useResultTopState";
+import { usePhoneDropdown } from "./hooks/usePhoneDropdown";
 import { useResultNavigation } from "./hooks/useResultNavigation";
 
 interface ResultContentProps {
   sendDataToParent: (
     data: any,
     trip: "one-way" | "two-way",
-    selectedProvider?: string
+    selectedProvider?: string,
   ) => void;
   providersName: Array<{
     id: string | number;
@@ -61,6 +62,7 @@ export default function ResultContent({
     searchData,
   } = useResultTopState(sendDataToParent);
 
+  const { phoneOpen, handlePhoneClick, closePhone } = usePhoneDropdown();
   const { handelBack } = useResultNavigation();
 
   return (
@@ -69,15 +71,14 @@ export default function ResultContent({
         status.setting?.theme === "light" ? "bg-gray-50" : "bg-gray-700"
       }`}
     >
-      {/* Top bar */}
+      {/**Top bar */}
       <div
-        className={`fixed top-16 left-0 w-full p-4 shadow-md ${
+        className={`fixed top-16 left-0 w-full p-4 shadow-md  ${
           status.setting?.theme === "light" ? "bg-gray-50" : "bg-gray-700"
-        } flex justify-between items-center z-30`}
+        } flex justify-between items-center `}
       >
         <ActionButtons status={status} />
       </div>
-
       {/* Main top */}
       <div
         className={`mt-13 ${

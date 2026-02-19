@@ -2,8 +2,6 @@ import { useRef, useState } from "react";
 import TripCard from "./TripCard";
 import Image from "next/image";
 
-import { CSSProperties } from "react";
-
 interface Trip {
   bus_code_index: string | number;
   [key: string]: any; // other properties of trip
@@ -32,7 +30,7 @@ interface Props {
     trip: any,
     providerId: string,
     type: string,
-    index: number
+    index: number,
   ) => void;
 
   handelPopup?: (trip: Trip) => void;
@@ -119,8 +117,8 @@ const ProviderTripsRow = ({
               leftArrowHover === true
                 ? "/assets/icons/angle_left_hover.svg"
                 : status.setting?.theme === "light"
-                ? "/assets/icons/angle_left_gray.svg"
-                : "/assets/icons/angle_left_light_white.svg"
+                  ? "/assets/icons/angle_left_gray.svg"
+                  : "/assets/icons/angle_left_light_white.svg"
             }
             alt="arrow"
             width={24}
@@ -141,8 +139,8 @@ const ProviderTripsRow = ({
               rightArrowHover === true
                 ? "/assets/icons/angle_right_hover.svg"
                 : status.setting?.theme === "light"
-                ? "/assets/icons/angle_right_gray.svg"
-                : "/assets/icons/angle_right_light_white.svg"
+                  ? "/assets/icons/angle_right_gray.svg"
+                  : "/assets/icons/angle_right_light_white.svg"
             }
             alt="arrow"
             width={24}

@@ -1,3 +1,4 @@
+// app/api/getTripOptions/route.ts
 import { query } from "@/lib/db_hulu_guzo_user";
 
 export async function POST(request: Request) {
@@ -5,17 +6,18 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     const {
-      sourceCityFirst = null,
-      destinationCityFirst = null,
+      sourceCityFirst,
+      destinationCityFirst,
       tripTypeFirst = "one-way",
-      dateFirst = null,
-      passengerCountFirst = null,
+      dateFirst,
+      passengerCountFirst,
       sourceCityRound = null,
       destinationCityRound = null,
       dateRound = null,
       passengerCountRound = null,
     } = body;
 
+    // Validate required fields for first trip
     if (
       !sourceCityFirst ||
       !destinationCityFirst ||
@@ -24,47 +26,55 @@ export async function POST(request: Request) {
     ) {
       return new Response(
         JSON.stringify({ message: "Missing required fields for first trip" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        { status: 400, headers: { "Content-Type": "application/json" } },
       );
     }
 
-    const params = [
-      sourceCityFirst,
-      destinationCityFirst,
-      dateFirst,
-      passengerCountFirst,
-      sourceCityRound,
-      destinationCityRound,
-      dateRound,
-      passengerCountRound,
-    ];
+    // If tripTypeFirst is "two-way", ensure round-trip fields are provided
+    if (tripTypeFirst === "two-way") {
+      if (
+        !sourceCityRound ||
+        !destinationCityRound ||
+        !dateRound ||
+        !passengerCountRound
+      ) {
+        return new Response(
+          JSON.stringify({ message: "Missing required fields for round trip" }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        );
+      }
+    }
 
-    // ✅ FIX: do NOT destructure
-    const result: any = await query(
-      "CALL GetTripOptions(?, ?, ?, ?, ?, ?, ?, ?)",
-      params
+    // Call PostgreSQL function
+    const result = await query(
+      `
+      SELECT * FROM get_trip_options (
+        $1::text, $2::text, $3::date, $4::int,
+        $5::text, $6::text, $7::date, $8::int
+      )
+      `,
+      [
+        sourceCityFirst,
+        destinationCityFirst,
+        dateFirst,
+        passengerCountFirst,
+        sourceCityRound,
+        destinationCityRound,
+        dateRound,
+        passengerCountRound,
+      ],
     );
 
-    // MySQL CALL returns nested arrays
-    const rows =
-      Array.isArray(result) && Array.isArray(result[0])
-        ? result[0]
-        : result;
+    const trips = result.rows ?? [];
 
-    const trips =
-      Array.isArray(rows) && Array.isArray(rows[0]) ? rows[0] : rows;
-
+    // Group trips by provider_id and trip_type
     const grouped: Record<string, Record<string, any[]>> = {};
-
-    trips.forEach((trip: any) => {
-      const providerId = trip.provider_id;
-      const tripType = trip.trip_type;
-
-      if (!grouped[providerId]) grouped[providerId] = {};
-      if (!grouped[providerId][tripType])
-        grouped[providerId][tripType] = [];
-
-      grouped[providerId][tripType].push(trip);
+    trips.forEach((trip) => {
+      const { provider_id, trip_type } = trip;
+      if (!grouped[provider_id]) grouped[provider_id] = {};
+      if (!grouped[provider_id][trip_type])
+        grouped[provider_id][trip_type] = [];
+      grouped[provider_id][trip_type].push(trip);
     });
 
     return new Response(JSON.stringify(grouped), {
@@ -74,8 +84,11 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("API Error:", error);
     return new Response(
-      JSON.stringify({ success: false, message: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({
+        success: false,
+        message: error.message || "Internal server error",
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
 }
